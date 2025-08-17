@@ -1,0 +1,15 @@
+[Unit]
+Description=Zmanim Tracker Server for TRMNL
+After=network.target
+
+[Service]
+Type=simple
+User=xander
+WorkingDirectory=/var/www/trmnl-zmanim
+ExecStart=/usr/bin/python3 /var/www/trmnl-zmanim/zmanim_server.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

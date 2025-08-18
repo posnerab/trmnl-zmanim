@@ -1,0 +1,14 @@
+[Unit]
+Description=Mincha Time Scraper Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=xander
+WorkingDirectory=/var/www/trmnl-zmanim/mincha_scraper
+ExecStart=/var/www/trmnl-zmanim/mincha_scraper/run_mincha_scraper.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Mincha Scraper Daily at 12:01 AM
+Requires=mincha-scraper.service
+
+[Timer]
+OnCalendar=*-*-* 00:01:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

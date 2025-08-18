@@ -71,34 +71,56 @@ def get_current_period(zmanim_data):
             "Shema (GR'A)": time_objects.get('sofZmanShma'),
             "Tefilla (MGA)": time_objects.get('sofZmanTfillaMGA'),
             "Tefilla (GR'A)": time_objects.get('sofZmanTfilla'),
-            "Chatzot": chatzot
+            "Chatzos": chatzot
         }
     elif now < sunset:
         # After chatzot, before sunset - show Mincha times
         period = "Mincha"
-        relevant_times = {
-            "Mincha Gedola": time_objects.get('minchaGedola'),
-            "Mincha Ketana": time_objects.get('minchaKetana'),
-            "Plag HaMincha": time_objects.get('plagHaMincha'),
-            "Sunset": sunset
-        }
+        
+        # Load Mincha time from scraper
+        mincha_time = None
+        try:
+            with open('/var/www/trmnl-zmanim/mincha_scraper/mincha_today.json', 'r') as f:
+                mincha_data = json.load(f)
+                mincha_time = mincha_data.get('mincha_time')
+        except:
+            pass
+        
+        relevant_times = {}
+        if mincha_time:
+            relevant_times["Mincha"] = mincha_time
+        
+        # Add sunset time (formatted as 7:51 not 07:51)
+        if sunset:
+            relevant_times["Sunset"] = sunset.strftime("%-I:%M %p")  # Remove leading zero
+        
+        # Add Plag HaMincha on Friday
+        if today.weekday() == 4:  # Friday (0=Monday, 4=Friday)
+            plag = time_objects.get('plagHaMincha')
+            if plag:
+                relevant_times["Plag HaMincha"] = plag.strftime("%-I:%M %p")  # Remove leading zero
     else:
-        # After sunset - show nightfall and chatzot night
+        # After sunset - show nightfall and chatzot night (flipped order)
         period = "Evening"
         relevant_times = {
-            "Tzeit (72 min)": tzeit72min,
-            "Chatzot Night": time_objects.get('chatzotNight')
+            "Tzeis (72 min)": tzeit72min,
+            "Chatzos Night": time_objects.get('chatzotNight')
         }
     
     # Format times for display
     formatted_times = {}
     for name, time_obj in relevant_times.items():
         if time_obj:
-            formatted_times[name] = time_obj.strftime("%I:%M %p")
+            if isinstance(time_obj, str):
+                # Already formatted string (from Mincha scraper)
+                formatted_times[name] = time_obj
+            else:
+                # Datetime object - format it
+                formatted_times[name] = time_obj.strftime("%-I:%M %p")  # Remove leading zero
     
     return {
         "period": period,
-        "current_time": now.strftime("%I:%M %p"),
+        "current_time": now.strftime("%-I:%M %p"),  # Remove leading zero
         "date": today.strftime("%B %d, %Y"),
         "times": formatted_times,
         "location": zmanim_data.get('location', {}).get('title', 'Unknown Location')
@@ -128,7 +150,7 @@ def health():
 def html_markup():
     """HTML markup endpoint for TRMNL"""
     data = get_current_period(load_zmanim_data())
-    return render_template('zmanim_display.html', **data)
+    return render_template('zmanim_display_liquid.html', **data)
 
 if __name__ == '__main__':
     print("Starting Zmanim Tracker Server...")

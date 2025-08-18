@@ -122,33 +122,33 @@ cat mincha-scraper/mincha_today.json
 # ================
 
 # Test JSON API endpoint
-curl -s http://localhost:5001/api/zmanim | jq .
+curl -s https://abie.live/zmanim/api/zmanim | jq .
 
 # Test JSON API endpoint (pretty print without jq)
-curl -s http://localhost:5001/api/zmanim
+curl -s https://abie.live/zmanim/api/zmanim
 
 # Test health endpoint
-curl -s http://localhost:5001/health
+curl -s https://abie.live/zmanim-health
 
 # Test home page
-curl -s http://localhost:5001/
+curl -s https://abie.live/zmanim/
 
 # Test HTML endpoint (liquid template)
-curl -s http://localhost:5001/html | head -20
+curl -s https://abie.live/zmanim/html | head -20
 
 # Test HTML simple endpoint
-curl -s http://localhost:5001/html/simple | head -20
+curl -s https://abie.live/zmanim/html/simple | head -20
 
 # Test endpoints with full URL (production)
 curl -s https://abie.live/zmanim/api/zmanim | jq .
 curl -s https://abie.live/zmanim/html/simple | head -20
 
 # Test endpoints with verbose output
-curl -v http://localhost:5001/api/zmanim
+curl -v https://abie.live/zmanim/api/zmanim
 
 # Test endpoints and save to file
-curl -s http://localhost:5001/api/zmanim > test_api_output.json
-curl -s http://localhost:5001/html/simple > test_html_output.html
+curl -s https://abie.live/zmanim/api/zmanim > test_api_output.json
+curl -s https://abie.live/zmanim/html/simple > test_html_output.html
 
 # FILE SYSTEM CHECKS
 # ==================
@@ -217,5 +217,5 @@ sudo systemctl status zmanim-tracker.service
 sudo systemctl status mincha-scraper.timer
 
 # 6. Test endpoints
-curl -s http://localhost:5001/health
-curl -s http://localhost:5001/api/zmanim | jq .
+curl -s https://abie.live/zmanim-health
+curl -s https://abie.live/zmanim/api/zmanim | jq .

@@ -3,7 +3,7 @@
 # Mincha Time Scraper Runner
 # Runs the Python script to scrape today's Mincha time from Beth Jehudah calendar
 
-cd /var/www/trmnl-zmanim/mincha_scraper
+cd /var/www/trmnl-zmanim/mincha-scraper
 
 echo "Starting Mincha time scraper at $(date)"
 

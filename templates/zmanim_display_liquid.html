@@ -153,21 +153,23 @@
         <div class="content">
             <div class="time-card">
                 <div class="time-card-header">
-                    {% if period == "Shacharis" %}
-                    <img src="https://twemoji.maxcdn.com/v/latest/svg/1f4e6.svg" width="20" height="20" class="emoji" alt="📦">
-                    {% elif period == "Mincha" %}
-                    <img src="https://twemoji.maxcdn.com/v/latest/svg/1f4e6.svg" width="20" height="20" class="emoji" alt="📦">
+                    {% if period == "Morning" %}
+                        <img src="https://twemoji.maxcdn.com/v/latest/svg/1f305.svg" width="20" height="20" class="emoji" alt="🌅">
+                    {% elif period == "Afternoon" %}
+                        <img src="https://twemoji.maxcdn.com/v/latest/svg/2600.svg" width="20" height="20" class="emoji" alt="☀️">
+                    {% elif period == "Evening" %}
+                        <img src="https://twemoji.maxcdn.com/v/latest/svg/1f319.svg" width="20" height="20" class="emoji" alt="🌙">
                     {% else %}
-                    <img src="https://twemoji.maxcdn.com/v/latest/svg/1f319.svg" width="20" height="20" class="emoji" alt="🌙">
+                        <img src="https://twemoji.maxcdn.com/v/latest/svg/1f4e6.svg" width="20" height="20" class="emoji" alt="📦">
                     {% endif %}
                     {{ period.upper() }}
                 </div>
                 <div class="time-grid">
                     {% if times %}
-                        {% for name, time in times.items() %}
+                        {% for time in times %}
                         <div class="time-item">
-                            <p class="time-value">{{ time }}</p>
-                            <p class="time-label">{{ name }}</p>
+                            <p class="time-value">{{ time[1] }}</p>
+                            <p class="time-label">{{ time[0] }}</p>
                         </div>
                         {% endfor %}
                     {% else %}
@@ -179,7 +181,7 @@
                 </div>
             </div>
             
-            {% if period == "Shacharis" %}
+            {% if period == "Morning" %}
             <div class="info-card">
                 <div class="info-content">
                     <p class="info-text">
@@ -188,7 +190,7 @@
                     </p>
                 </div>
             </div>
-            {% elif period == "Mincha" %}
+            {% elif period == "Afternoon" %}
             <div class="info-card">
                 <div class="info-content">
                     <p class="info-text">

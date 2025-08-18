@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=oneshot
 User=xander
-WorkingDirectory=/var/www/trmnl-zmanim/mincha_scraper
-ExecStart=/var/www/trmnl-zmanim/mincha_scraper/run_mincha_scraper.sh
+WorkingDirectory=/var/www/trmnl-zmanim/mincha-scraper
+ExecStart=/var/www/trmnl-zmanim/mincha-scraper/run_mincha_scraper.sh
 StandardOutput=journal
 StandardError=journal
 

@@ -1,0 +1,221 @@
+# ZMANIM TRACKER - COMMANDS REFERENCE
+# ======================================
+
+# NODE/SERVER MANAGEMENT
+# ======================
+
+# Start the Flask server in development mode
+python3 zmanim_server.py
+
+# Start the Flask server in background
+python3 zmanim_server.py &
+
+# Stop the Flask server (if running in background)
+pkill -f "python3 zmanim_server.py"
+
+# Check if Flask server is running
+ps aux | grep "python3 zmanim_server.py"
+
+# Check what's using port 5001
+sudo lsof -i :5001
+
+# Kill process using port 5001
+sudo kill -9 $(sudo lsof -t -i:5001)
+
+# SERVICE MANAGEMENT
+# ==================
+
+# Reload systemd daemon (after service file changes)
+sudo systemctl daemon-reload
+
+# Start the Zmanim Tracker service
+sudo systemctl start zmanim-tracker.service
+
+# Stop the Zmanim Tracker service
+sudo systemctl stop zmanim-tracker.service
+
+# Restart the Zmanim Tracker service
+sudo systemctl restart zmanim-tracker.service
+
+# Check status of Zmanim Tracker service
+sudo systemctl status zmanim-tracker.service
+
+# Enable Zmanim Tracker service to start on boot
+sudo systemctl enable zmanim-tracker.service
+
+# Disable Zmanim Tracker service from starting on boot
+sudo systemctl disable zmanim-tracker.service
+
+# View Zmanim Tracker service logs
+sudo journalctl -u zmanim-tracker.service -f
+
+# View recent Zmanim Tracker service logs
+sudo journalctl -u zmanim-tracker.service --since "1 hour ago" -n 20
+
+# MINCHA SCRAPER SERVICE MANAGEMENT
+# ================================
+
+# Start the Mincha Scraper service
+sudo systemctl start mincha-scraper.service
+
+# Stop the Mincha Scraper service
+sudo systemctl stop mincha-scraper.service
+
+# Restart the Mincha Scraper service
+sudo systemctl restart mincha-scraper.service
+
+# Check status of Mincha Scraper service
+sudo systemctl status mincha-scraper.service
+
+# Enable Mincha Scraper service
+sudo systemctl enable mincha-scraper.service
+
+# Disable Mincha Scraper service
+sudo systemctl disable mincha-scraper.service
+
+# View Mincha Scraper service logs
+sudo journalctl -u mincha-scraper.service -f
+
+# View recent Mincha Scraper service logs
+sudo journalctl -u mincha-scraper.service --since "1 hour ago" -n 20
+
+# MINCHA SCRAPER TIMER MANAGEMENT
+# ===============================
+
+# Start the Mincha Scraper timer
+sudo systemctl start mincha-scraper.timer
+
+# Stop the Mincha Scraper timer
+sudo systemctl stop mincha-scraper.timer
+
+# Restart the Mincha Scraper timer
+sudo systemctl restart mincha-scraper.timer
+
+# Check status of Mincha Scraper timer
+sudo systemctl status mincha-scraper.timer
+
+# Enable Mincha Scraper timer
+sudo systemctl enable mincha-scraper.timer
+
+# Disable Mincha Scraper timer
+sudo systemctl disable mincha-scraper.timer
+
+# List all timers
+sudo systemctl list-timers
+
+# List Mincha Scraper timer specifically
+sudo systemctl list-timers mincha-scraper.timer
+
+# MANUAL MINCHA SCRAPER EXECUTION
+# ===============================
+
+# Run Mincha scraper manually
+cd mincha-scraper && ./run_mincha_scraper.sh
+
+# Run Mincha scraper Python script directly
+cd mincha-scraper && python3 mincha_scraper_enhanced.py
+
+# Check Mincha scraper output
+cat mincha-scraper/mincha_today.json
+
+# ENDPOINT TESTING
+# ================
+
+# Test JSON API endpoint
+curl -s http://localhost:5001/api/zmanim | jq .
+
+# Test JSON API endpoint (pretty print without jq)
+curl -s http://localhost:5001/api/zmanim
+
+# Test health endpoint
+curl -s http://localhost:5001/health
+
+# Test home page
+curl -s http://localhost:5001/
+
+# Test HTML endpoint (liquid template)
+curl -s http://localhost:5001/html | head -20
+
+# Test HTML simple endpoint
+curl -s http://localhost:5001/html/simple | head -20
+
+# Test endpoints with full URL (production)
+curl -s https://abie.live/zmanim/api/zmanim | jq .
+curl -s https://abie.live/zmanim/html/simple | head -20
+
+# Test endpoints with verbose output
+curl -v http://localhost:5001/api/zmanim
+
+# Test endpoints and save to file
+curl -s http://localhost:5001/api/zmanim > test_api_output.json
+curl -s http://localhost:5001/html/simple > test_html_output.html
+
+# FILE SYSTEM CHECKS
+# ==================
+
+# Check if Mincha scraper files exist
+ls -la mincha-scraper/
+
+# Check Mincha scraper permissions
+ls -la mincha-scraper/run_mincha_scraper.sh
+
+# Check if templates exist
+ls -la templates/
+
+# Check if service files are linked
+ls -la /etc/systemd/system/ | grep -E "(zmanim|mincha)"
+
+# Check Python dependencies
+pip3 list | grep -E "(flask|requests|beautifulsoup4)"
+
+# DEBUGGING COMMANDS
+# ==================
+
+# Check system resources
+htop
+
+# Check disk space
+df -h
+
+# Check memory usage
+free -h
+
+# Check network connections
+netstat -tulpn | grep :5001
+
+# Check system logs for errors
+sudo journalctl -xe | grep -E "(zmanim|mincha|error)"
+
+# Check nginx status (if using reverse proxy)
+sudo systemctl status nginx
+
+# Check nginx configuration
+sudo nginx -t
+
+# QUICK RESTART SEQUENCE
+# ======================
+
+# Complete restart sequence (run these in order):
+# 1. Stop services
+sudo systemctl stop zmanim-tracker.service
+sudo systemctl stop mincha-scraper.timer
+sudo systemctl stop mincha-scraper.service
+
+# 2. Kill any remaining processes
+pkill -f "python3 zmanim_server.py"
+sudo kill -9 $(sudo lsof -t -i:5001) 2>/dev/null || true
+
+# 3. Reload systemd
+sudo systemctl daemon-reload
+
+# 4. Start services
+sudo systemctl start zmanim-tracker.service
+sudo systemctl start mincha-scraper.timer
+
+# 5. Check status
+sudo systemctl status zmanim-tracker.service
+sudo systemctl status mincha-scraper.timer
+
+# 6. Test endpoints
+curl -s http://localhost:5001/health
+curl -s http://localhost:5001/api/zmanim | jq .

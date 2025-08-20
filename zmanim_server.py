@@ -69,9 +69,8 @@ def get_current_period(zmanim_data):
         period = "Morning"
         relevant_times = {
             "Shema (MGA)": time_objects.get('sofZmanShmaMGA'),
-            "Shema (GR'A)": time_objects.get('sofZmanShma'),
-            "Tefilla (MGA)": time_objects.get('sofZmanTfillaMGA'),
-            "Tefilla (GR'A)": time_objects.get('sofZmanTfilla'),
+            "Shema (Gra)": time_objects.get('sofZmanShma'),
+            "Tefilla (Gra)": time_objects.get('sofZmanTfilla'),
             "Chatzos": chatzot
         }
     elif now >= chatzot and now < sunset:
@@ -112,9 +111,8 @@ def get_current_period(zmanim_data):
         period = "Morning"
         relevant_times = {
             "Shema (MGA)": time_objects.get('sofZmanShmaMGA'),
-            "Shema (GR'A)": time_objects.get('sofZmanShma'),
-            "Tefilla (MGA)": time_objects.get('sofZmanTfillaMGA'),
-            "Tefilla (GR'A)": time_objects.get('sofZmanTfilla'),
+            "Shema (Gra)": time_objects.get('sofZmanShma'),
+            "Tefilla (Gra)": time_objects.get('sofZmanTfilla'),
             "Chatzos": chatzot
         }
     

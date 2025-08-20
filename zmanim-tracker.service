@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=xander
-WorkingDirectory=/var/www/trmnl-zmanim
-ExecStart=/usr/bin/python3 /var/www/trmnl-zmanim/zmanim_server.py
+WorkingDirectory=/var/www/J-Projects/trmnl-zmanim
+ExecStart=/usr/bin/python3 /var/www/J-Projects/trmnl-zmanim/zmanim_server.py
 Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1

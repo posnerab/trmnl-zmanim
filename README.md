@@ -52,9 +52,9 @@ Returns JSON data with current zmanim information.
   "date": "February 14, 2025",
   "times": {
     "Shema (MGA)": "8:36 AM",
-    "Shema (GR'A)": "9:28 AM",
+    "Shema (Gra)": "9:28 AM",
     "Tefilla (MGA)": "9:46 AM",
-    "Tefilla (GR'A)": "10:21 AM",
+    "Tefilla (Gra)": "10:21 AM",
     "Chatzot": "12:06 PM"
   },
   "location": "Milwaukee, WI 53216"

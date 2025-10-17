@@ -1,9 +1,9 @@
-{# Map TRMNL polling payload (IDX_0) to locals if present #}
+{%- comment -%} Map TRMNL polling payload (IDX_0) to locals if present {%- endcomment -%}
 {% if IDX_0 %}
-{% set hdate = IDX_0.hdate %}
-{% set parasha = IDX_0.parasha %}
-{% set location = IDX_0.location %}
-{% set date = IDX_0.date %}
+{% assign hdate = IDX_0.hdate %}
+{% assign parasha = IDX_0.parasha %}
+{% assign location = IDX_0.location %}
+{% assign date = IDX_0.date %}
 {% endif %}
 
 <div
@@ -17,7 +17,7 @@
         <p style="margin: 4px 0 0 0; font-size: 16px;">
             <img src="https://twemoji.maxcdn.com/v/latest/svg/1f30e.svg" width="14" height="14"
                 style="vertical-align: middle; margin-right: 4px;">
-            {{ location | default("Milwaukee, WI") }}
+            {{ location | default: "Milwaukee, WI" }}
         </p>
     </div>
 

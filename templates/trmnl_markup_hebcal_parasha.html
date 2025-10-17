@@ -1,0 +1,21 @@
+{%- comment -%} Map TRMNL polling payload (IDX_0) to locals if present {%- endcomment -%}
+{% if IDX_0 %}
+{% assign parasha = IDX_0.parasha %}
+{% endif %}
+
+<div
+    style="width: 100%; height: 100%; max-height: 240px; padding: 16px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    {% if parasha %}
+        {% assign parasha_clean = parasha | remove: "Parshas " | remove: "Parashat " %}
+        <div style="text-align: center;">
+            <p style="font-size: 52px; font-weight: bold; margin: 0 0 8px 0; color: black;">
+                {{ parasha_clean }}
+            </p>
+            <p style="font-size: 24px; margin: 0; color: black;">Parasha</p>
+        </div>
+    {% else %}
+        <div style="text-align: center;">
+            <p style="font-size: 20px; font-weight: bold; margin: 0; color: black;">No Parasha</p>
+        </div>
+    {% endif %}
+</div>

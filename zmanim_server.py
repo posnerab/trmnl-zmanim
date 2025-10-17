@@ -5,7 +5,7 @@ Displays prayer times based on time of day
 """
 
 from flask import Flask, jsonify, render_template, request, abort
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 import json
 import os
 import pytz
@@ -35,6 +35,100 @@ def parse_time(time_str):
         return datetime.fromisoformat(time_str.replace('Z', '+00:00'))
     except:
         return None
+
+def get_next_time_only(zmanim_data):
+    """Get only the next upcoming time"""
+    if not zmanim_data:
+        return {"error": "No zmanim data available"}
+    
+    now = datetime.now(pytz.timezone('America/Chicago'))
+    today = now.date()
+    
+    # Parse today's times
+    times = zmanim_data.get('times', {})
+    
+    # Convert string times to datetime objects
+    time_objects = {}
+    for key, time_str in times.items():
+        parsed_time = parse_time(time_str)
+        if parsed_time:
+            time_objects[key] = parsed_time
+    
+    # Get all relevant times throughout the day
+    sunrise = time_objects.get('sunrise')
+    chatzot = time_objects.get('chatzot')
+    sunset = time_objects.get('sunset')
+    tzeit72min = time_objects.get('tzeit72min')
+    
+    if not chatzot or not sunset:
+        return {"error": "Missing critical times"}
+    
+    # Build list of all times with their names
+    all_times = []
+    
+    # Morning times
+    if time_objects.get('sofZmanShmaMGA'):
+        all_times.append(("Shema (MGA)", time_objects.get('sofZmanShmaMGA')))
+    if time_objects.get('sofZmanShma'):
+        all_times.append(("Shema (Gra)", time_objects.get('sofZmanShma')))
+    if time_objects.get('sofZmanTfilla'):
+        all_times.append(("Tefilla (Gra)", time_objects.get('sofZmanTfilla')))
+    if chatzot:
+        all_times.append(("Chatzos", chatzot))
+    
+    # Afternoon times
+    if time_objects.get('plagHaMincha'):
+        all_times.append(("Plag HaMincha", time_objects.get('plagHaMincha')))
+    
+    # Friday candle lighting
+    if today.weekday() == 4 and sunset:
+        candle_lighting = sunset - timedelta(minutes=18)
+        all_times.append(("Candle Lighting", candle_lighting))
+    
+    if sunset:
+        all_times.append(("Sunset", sunset))
+    
+    # Evening times
+    if tzeit72min:
+        all_times.append(("Tzeis (72 min)", tzeit72min))
+    if time_objects.get('chatzotNight'):
+        all_times.append(("Chatzos Night", time_objects.get('chatzotNight')))
+    
+    # Filter to only future times and get the first one
+    next_time = None
+    next_time_name = None
+    
+    for name, time_obj in all_times:
+        if time_obj and time_obj > now:
+            next_time = time_obj
+            next_time_name = name
+            break
+    
+    # Determine period based on current time
+    if sunrise and now >= sunrise and now < chatzot:
+        period = "Morning"
+    elif now >= chatzot and now < sunset:
+        if today.weekday() == 4:
+            period = "Erev Shabbos"
+        else:
+            period = "Afternoon"
+    elif now >= sunset or (sunrise and now < sunrise):
+        period = "Evening"
+    else:
+        period = "Morning"
+    
+    # Format the next time
+    formatted_times = []
+    if next_time and next_time_name:
+        formatted_times.append([next_time_name, next_time.strftime("%-I:%M %p")])
+    
+    return {
+        "period": period,
+        "current_time": now.strftime("%-I:%M %p"),
+        "date": today.strftime("%B %d, %Y"),
+        "times": formatted_times,
+        "location": zmanim_data.get('location', {}).get('title', 'Unknown Location')
+    }
 
 def get_current_period(zmanim_data):
     """Determine current period and relevant times"""
@@ -75,30 +169,28 @@ def get_current_period(zmanim_data):
         }
     elif now >= chatzot and now < sunset:
         # After chatzot, before sunset - show Afternoon times
-        period = "Afternoon"
-        
-        # Load Mincha time from scraper
-        mincha_time = None
-        try:
-            with open('/var/www/trmnl-zmanim/mincha-scraper/mincha_today.json', 'r') as f:
-                mincha_data = json.load(f)
-                mincha_time = mincha_data.get('mincha_time')
-        except:
-            pass
+        # On Friday, call it "Erev Shabbos" instead of "Afternoon"
+        if today.weekday() == 4:  # Friday (0=Monday, 4=Friday)
+            period = "Erev Shabbos"
+        else:
+            period = "Afternoon"
         
         relevant_times = {}
-        if mincha_time:
-            relevant_times["Mincha"] = mincha_time
+        
+        # Add Plag HaMincha
+        plag = time_objects.get('plagHaMincha')
+        if plag:
+            relevant_times["Plag HaMincha"] = plag.strftime("%-I:%M %p")
+        
+        # On Fridays, add Candle Lighting (18 minutes before sunset)
+        if today.weekday() == 4:  # Friday (0=Monday, 4=Friday)
+            if sunset:
+                candle_lighting = sunset - timedelta(minutes=18)
+                relevant_times["Candle Lighting"] = candle_lighting.strftime("%-I:%M %p")
         
         # Add sunset time (formatted as 7:51 not 07:51)
         if sunset:
-            relevant_times["Sunset"] = sunset.strftime("%-I:%M %p")  # Remove leading zero
-        
-        # Add Plag HaMincha on Friday
-        if today.weekday() == 4:  # Friday (0=Monday, 4=Friday)
-            plag = time_objects.get('plagHaMincha')
-            if plag:
-                relevant_times["Plag HaMincha"] = plag.strftime("%-I:%M %p")  # Remove leading zero
+            relevant_times["Sunset"] = sunset.strftime("%-I:%M %p")
     elif now >= sunset or (sunrise and now < sunrise):
         # After sunset or before sunrise - show Evening times
         period = "Evening"
@@ -121,7 +213,7 @@ def get_current_period(zmanim_data):
     for name, time_obj in relevant_times.items():
         if time_obj:
             if isinstance(time_obj, str):
-                # Already formatted string (from Mincha scraper)
+                # Already formatted string
                 formatted_times.append([name, time_obj])
             else:
                 # Datetime object - format it
@@ -160,6 +252,12 @@ def html_markup():
     """HTML markup endpoint for TRMNL"""
     data = get_current_period(load_zmanim_data())
     return render_template('zmanim_display_liquid.html', **data)
+
+@app.route('/quadrant')
+def quadrant_markup():
+    """HTML markup endpoint for TRMNL quadrant view - shows only next time"""
+    data = get_next_time_only(load_zmanim_data())
+    return render_template('trmnl_markup_quadrant.html', **data)
 
 
 

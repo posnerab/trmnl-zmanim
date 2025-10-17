@@ -9,13 +9,13 @@
     <div style="border: 2px solid black; background: white; display: flex; flex-direction: column; height: 100%;">
         <div style="background: black; color: white; padding: 8px; text-align: center;">
             <h3 style="margin: 0; font-size: 16px; font-weight: bold;">
-                {% if period == "Morning" %}
+                {% if period == "Morning" or period == "Shabbos Morning" %}
                 <img src="https://twemoji.maxcdn.com/v/latest/svg/1f305.svg" width="16" height="16"
                     style="vertical-align: middle; margin-right: 6px;">
-                {% elsif period == "Afternoon" or period == "Erev Shabbos" %}
+                {% elsif period == "Afternoon" or period == "Erev Shabbos" or period == "Shabbos Afternoon" %}
                 <img src="https://twemoji.maxcdn.com/v/latest/svg/2600.svg" width="16" height="16"
                     style="vertical-align: middle; margin-right: 6px;">
-                {% elsif period == "Evening" %}
+                {% elsif period == "Evening" or period == "Motzei Shabbos" %}
                 <img src="https://twemoji.maxcdn.com/v/latest/svg/1f319.svg" width="16" height="16"
                     style="vertical-align: middle; margin-right: 6px;">
                 {% else %}

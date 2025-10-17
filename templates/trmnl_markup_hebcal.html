@@ -1,0 +1,70 @@
+{# Map TRMNL polling payload (IDX_0) to locals if present #}
+{% if IDX_0 %}
+{% set hdate = IDX_0.hdate %}
+{% set parasha = IDX_0.parasha %}
+{% set location = IDX_0.location %}
+{% set date = IDX_0.date %}
+{% endif %}
+
+<div
+    style="width: 100%; height: 100%; max-width: 800px; max-height: 480px; padding: 12px; display: flex; flex-direction: column; box-sizing: border-box; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="background: black; color: white; padding: 10px 15px; text-align: center; border-radius: 0;">
+        <h1 style="margin: 0; font-size: 22px; font-weight: bold;">
+            <img src="https://twemoji.maxcdn.com/v/latest/svg/1f4c5.svg" width="22" height="22"
+                style="vertical-align: middle; margin-right: 6px;">
+            HEBREW CALENDAR
+        </h1>
+        <p style="margin: 4px 0 0 0; font-size: 16px;">
+            <img src="https://twemoji.maxcdn.com/v/latest/svg/1f30e.svg" width="14" height="14"
+                style="vertical-align: middle; margin-right: 4px;">
+            {{ location | default("Milwaukee, WI") }}
+        </p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; margin-top: 12px; flex-grow: 1; gap: 12px;">
+        <!-- Hebrew Date Card -->
+        <div style="border: 2px solid black; background: white; display: flex; flex-direction: column; flex: 1;">
+            <div style="background: black; color: white; padding: 10px; text-align: center;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: bold;">
+                    <img src="https://twemoji.maxcdn.com/v/latest/svg/1f4c6.svg" width="18" height="18"
+                        style="vertical-align: middle; margin-right: 6px;">
+                    HEBREW DATE
+                </h3>
+            </div>
+            <div style="padding: 20px; text-align: center; display: flex; align-items: center; justify-content: center; flex-grow: 1;">
+                {% if hdate %}
+                <div style="text-align: center;">
+                    <p style="font-size: 48px; font-weight: bold; margin: 0; color: black;">
+                        {{ hdate }}
+                    </p>
+                </div>
+                {% else %}
+                <div style="text-align: center;">
+                    <p style="font-size: 28px; font-weight: bold; margin: 0; color: black;">No Date Available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Parasha Card -->
+        {% if parasha %}
+        <div style="border: 2px solid black; background: white; display: flex; flex-direction: column; flex: 1;">
+            <div style="background: black; color: white; padding: 10px; text-align: center;">
+                <h3 style="margin: 0; font-size: 18px; font-weight: bold;">
+                    <img src="https://twemoji.maxcdn.com/v/latest/svg/1f4dc.svg" width="18" height="18"
+                        style="vertical-align: middle; margin-right: 6px;">
+                    PARASHA
+                </h3>
+            </div>
+            <div style="padding: 20px; text-align: center; display: flex; align-items: center; justify-content: center; flex-grow: 1;">
+                <div style="text-align: center;">
+                    <p style="font-size: 42px; font-weight: bold; margin: 0; color: black;">
+                        {{ parasha }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+

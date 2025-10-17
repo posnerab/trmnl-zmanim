@@ -9,11 +9,16 @@ from datetime import datetime, date, time, timedelta
 import json
 import os
 import pytz
+import requests
 
 app = Flask(__name__)
 
 # Load zmanim data
 ZMANIM_FILE = '/var/lib/homebridge/zmanim-js/hebcal_zmanim.json'
+
+# Hebcal API configuration
+HEBCAL_API_BASE = 'https://www.hebcal.com/hebcal'
+HEBCAL_ZIP = '53216'
 
 # API key authentication removed - endpoints are now public
 
@@ -35,6 +40,69 @@ def parse_time(time_str):
         return datetime.fromisoformat(time_str.replace('Z', '+00:00'))
     except:
         return None
+
+def fetch_hebcal_data():
+    """Fetch Hebrew calendar data from Hebcal API"""
+    try:
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        params = {
+            'v': '1',
+            'cfg': 'json',
+            'zip': HEBCAL_ZIP,
+            'start': today,
+            'end': today,
+            'maj': 'on',
+            'min': 'on',
+            'mod': 'on',
+            'nx': 'on',
+            'mf': 'on',
+            'ss': 'on',
+            's': 'on',
+            'd': 'on',
+            'c': 'on',
+            'M': 'on',
+            'lg': 'a'
+        }
+        
+        response = requests.get(HEBCAL_API_BASE, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Extract Hebrew date and parasha from items
+        hdate = None
+        parasha = None
+        
+        for item in data.get('items', []):
+            if item.get('category') == 'hebdate':
+                hdate = item.get('hdate')
+            elif item.get('category') in ['parashat', 'candles']:
+                # Parasha info is in the memo field
+                memo = item.get('memo')
+                if memo:
+                    parasha = memo
+        
+        return {
+            'hdate': hdate,
+            'parasha': parasha,
+            'location': data.get('location', {}).get('title', 'Unknown Location'),
+            'date': today
+        }
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching Hebcal data: {e}")
+        return {
+            'error': 'Failed to fetch Hebrew calendar data',
+            'hdate': None,
+            'parasha': None
+        }
+    except Exception as e:
+        print(f"Error parsing Hebcal data: {e}")
+        return {
+            'error': 'Failed to parse Hebrew calendar data',
+            'hdate': None,
+            'parasha': None
+        }
 
 def get_next_time_only(zmanim_data):
     """Get only the next upcoming time"""
@@ -106,14 +174,22 @@ def get_next_time_only(zmanim_data):
     
     # Determine period based on current time
     if sunrise and now >= sunrise and now < chatzot:
-        period = "Morning"
+        if today.weekday() == 5:  # Saturday
+            period = "Shabbos Morning"
+        else:
+            period = "Morning"
     elif now >= chatzot and now < sunset:
         if today.weekday() == 4:
             period = "Erev Shabbos"
+        elif today.weekday() == 5:  # Saturday
+            period = "Shabbos Afternoon"
         else:
             period = "Afternoon"
     elif now >= sunset or (sunrise and now < sunrise):
-        period = "Evening"
+        if today.weekday() == 5:  # Saturday evening
+            period = "Motzei Shabbos"
+        else:
+            period = "Evening"
     else:
         period = "Morning"
     
@@ -160,7 +236,11 @@ def get_current_period(zmanim_data):
     # Determine period and relevant times
     if sunrise and now >= sunrise and now < chatzot:
         # After sunrise, before chatzot - show Morning times
-        period = "Morning"
+        # On Saturday, call it "Shabbos Morning"
+        if today.weekday() == 5:  # Saturday (0=Monday, 5=Saturday)
+            period = "Shabbos Morning"
+        else:
+            period = "Morning"
         relevant_times = {
             "Shema (MGA)": time_objects.get('sofZmanShmaMGA'),
             "Shema (Gra)": time_objects.get('sofZmanShma'),
@@ -170,8 +250,11 @@ def get_current_period(zmanim_data):
     elif now >= chatzot and now < sunset:
         # After chatzot, before sunset - show Afternoon times
         # On Friday, call it "Erev Shabbos" instead of "Afternoon"
+        # On Saturday, call it "Shabbos Afternoon"
         if today.weekday() == 4:  # Friday (0=Monday, 4=Friday)
             period = "Erev Shabbos"
+        elif today.weekday() == 5:  # Saturday
+            period = "Shabbos Afternoon"
         else:
             period = "Afternoon"
         
@@ -188,16 +271,34 @@ def get_current_period(zmanim_data):
                 candle_lighting = sunset - timedelta(minutes=18)
                 relevant_times["Candle Lighting"] = candle_lighting.strftime("%-I:%M %p")
         
+        # On Saturday (Shabbos Afternoon), add Maariv and Havdalah times
+        if today.weekday() == 5:  # Saturday
+            if sunset:
+                maariv_time = sunset + timedelta(minutes=60)
+                relevant_times["Maariv"] = maariv_time.strftime("%-I:%M %p")
+                
+                # Havdalah is same as tzeit72min (sunset + 72 minutes)
+                if tzeit72min:
+                    relevant_times["Havdalah"] = tzeit72min.strftime("%-I:%M %p")
+        
         # Add sunset time (formatted as 7:51 not 07:51)
         if sunset:
             relevant_times["Sunset"] = sunset.strftime("%-I:%M %p")
     elif now >= sunset or (sunrise and now < sunrise):
         # After sunset or before sunrise - show Evening times
-        period = "Evening"
-        relevant_times = {
-            "Tzeis (72 min)": tzeit72min,
-            "Chatzos Night": time_objects.get('chatzotNight')
-        }
+        # On Saturday evening, call it "Motzei Shabbos"
+        if today.weekday() == 5:  # Saturday evening
+            period = "Motzei Shabbos"
+            relevant_times = {
+                "Havdalah": tzeit72min,  # Show as Havdalah instead of Tzeis
+                "Latest Maleve Malka": time_objects.get('chatzotNight')  # Chatzos Night renamed
+            }
+        else:
+            period = "Evening"
+            relevant_times = {
+                "Tzeis (72 min)": tzeit72min,
+                "Chatzos Night": time_objects.get('chatzotNight')
+            }
     else:
         # Fallback - show Shacharis times
         period = "Morning"
@@ -259,6 +360,17 @@ def quadrant_markup():
     data = get_next_time_only(load_zmanim_data())
     return render_template('trmnl_markup_quadrant.html', **data)
 
+@app.route('/hebcal')
+def hebcal_markup():
+    """HTML markup endpoint for TRMNL - shows Hebrew date and Parasha"""
+    data = fetch_hebcal_data()
+    return render_template('trmnl_markup_hebcal.html', **data)
+
+@app.route('/api/hebcal')
+def hebcal_api():
+    """API endpoint that returns Hebrew calendar data as JSON"""
+    data = fetch_hebcal_data()
+    return jsonify(data)
 
 
 if __name__ == '__main__':

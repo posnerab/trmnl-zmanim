@@ -278,7 +278,7 @@ def get_next_time_only(zmanim_data):
     return {
         "period": period,
         "current_time": now.strftime("%-I:%M %p"),
-        "date": today.strftime("%B %d, %Y"),
+        "date": today.strftime("%a, %B ") + str(today.day) + today.strftime(", %Y"),
         "hdate": hebcal_data.get('hdate', 'Unknown'),
         "parasha": parasha_data.get('parasha', 'Unknown'),
         "times": formatted_times,
@@ -418,7 +418,7 @@ def get_current_period(zmanim_data):
     return {
         "period": period,
         "current_time": now.strftime("%-I:%M %p"),  # Remove leading zero
-        "date": today.strftime("%B %d, %Y"),
+        "date": today.strftime("%a, %B ") + str(today.day) + today.strftime(", %Y"),
         "hdate": hebcal_data.get('hdate', 'Unknown'),
         "parasha": parasha_data.get('parasha', 'Unknown'),
         "times": formatted_times,

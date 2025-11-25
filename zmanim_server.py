@@ -211,6 +211,16 @@ def get_next_time_only(zmanim_data):
     # Build list of all times with their names
     all_times = []
     
+    # Early Morning times
+    if chatzot_night:
+        all_times.append(("Midnight", chatzot_night))
+    if alot_hashachar:
+        all_times.append(("Dawn", alot_hashachar))
+    if misheyakir_machmir:
+        all_times.append(("Earliest Daven", misheyakir_machmir))
+    if sunrise:
+        all_times.append(("Sunrise", sunrise))
+    
     # Morning times
     if time_objects.get('sofZmanShmaMGA'):
         all_times.append(("Shema (MGA)", time_objects.get('sofZmanShmaMGA')))
@@ -227,11 +237,21 @@ def get_next_time_only(zmanim_data):
     
     # Friday candle lighting
     if today.weekday() == 4 and sunset:
-        candle_lighting = sunset - timedelta(minutes=18)
+        candle_lighting = sunset - timedelta(minutes=19)
         all_times.append(("Candle Lighting", candle_lighting))
-    
-    if sunset:
+        erev_shabbos_sunset = sunset - timedelta(minutes=1)
+        all_times.append(("Sunset", erev_shabbos_sunset))
+    elif sunset:
         all_times.append(("Sunset", sunset))
+    
+    # Saturday evening times
+    if today.weekday() == 5 and sunset:
+        shabbos_evening_sunset = sunset - timedelta(minutes=1)
+        maariv_time = sunset + timedelta(minutes=59)
+        havdalah_time = sunset + timedelta(minutes=73)
+        all_times.append(("Sunset", shabbos_evening_sunset))
+        all_times.append(("Maariv", maariv_time))
+        all_times.append(("Havdalah", havdalah_time))
     
     # Evening times
     if tzeit72min:
@@ -249,8 +269,15 @@ def get_next_time_only(zmanim_data):
             next_time_name = name
             break
     
+    # Get early morning times
+    alot_hashachar = time_objects.get('alotHaShachar')
+    misheyakir_machmir = time_objects.get('misheyakirMachmir')
+    chatzot_night = time_objects.get('chatzotNight')
+    
     # Determine period based on current time
-    if sunrise and now >= sunrise and now < chatzot:
+    if chatzot_night and sunrise and now >= chatzot_night and now < sunrise:
+        period = "Early Morning"
+    elif sunrise and now >= sunrise and now < chatzot:
         if today.weekday() == 5:  # Saturday
             period = "Shabbos Morning"
         else:
@@ -262,11 +289,15 @@ def get_next_time_only(zmanim_data):
             period = "Shabbos Afternoon"
         else:
             period = "Afternoon"
-    elif now >= sunset or (sunrise and now < sunrise):
-        if today.weekday() == 5:  # Saturday evening
-            period = "Motzei Shabbos"
+    elif today.weekday() == 5 and sunset and now >= sunset:
+        # Saturday evening - check if before or after Havdalah
+        havdalah_time = sunset + timedelta(minutes=73)
+        if now < havdalah_time:
+            period = "Shabbos Evening"
         else:
-            period = "Evening"
+            period = "Motzei Shabbos"
+    elif now >= sunset or (chatzot_night and now < chatzot_night):
+        period = "Evening"
     else:
         period = "Morning"
     
@@ -314,12 +345,24 @@ def get_current_period(zmanim_data):
     chatzot = time_objects.get('chatzot')
     sunset = time_objects.get('sunset')
     tzeit72min = time_objects.get('tzeit72min')
+    alot_hashachar = time_objects.get('alotHaShachar')
+    misheyakir_machmir = time_objects.get('misheyakirMachmir')
+    chatzot_night = time_objects.get('chatzotNight')
     
     if not chatzot or not sunset:
         return {"error": "Missing critical times"}
     
     # Determine period and relevant times
-    if sunrise and now >= sunrise and now < chatzot:
+    if chatzot_night and sunrise and now >= chatzot_night and now < sunrise:
+        # Between midnight and sunrise - show Early Morning times
+        period = "Early Morning"
+        relevant_times = {
+            "Midnight": chatzot_night,
+            "Dawn": alot_hashachar,
+            "Earliest Daven": misheyakir_machmir,
+            "Sunrise": sunrise
+        }
+    elif sunrise and now >= sunrise and now < chatzot:
         # After sunrise, before chatzot - show Morning times
         # On Saturday, call it "Shabbos Morning"
         if today.weekday() == 5:  # Saturday (0=Monday, 5=Saturday)
@@ -370,30 +413,44 @@ def get_current_period(zmanim_data):
             if mincha_ketana:
                 relevant_times["Mincha Ketana"] = mincha_ketana.strftime("%-I:%M %p")
             
-            # On Fridays, add Candle Lighting (18 minutes before sunset)
+            # On Fridays, add Candle Lighting (19 minutes before sunset) and adjusted sunset
             if today.weekday() == 4:  # Friday (0=Monday, 4=Friday)
                 if sunset:
-                    candle_lighting = sunset - timedelta(minutes=18)
+                    candle_lighting = sunset - timedelta(minutes=19)
+                    erev_shabbos_sunset = sunset - timedelta(minutes=1)
                     relevant_times["Candle Lighting"] = candle_lighting.strftime("%-I:%M %p")
-            
-            # Add sunset time (formatted as 7:51 not 07:51)
-            if sunset:
-                relevant_times["Sunset"] = sunset.strftime("%-I:%M %p")
-    elif now >= sunset or (sunrise and now < sunrise):
-        # After sunset or before sunrise - show Evening times
-        # On Saturday evening, call it "Motzei Shabbos"
-        if today.weekday() == 5:  # Saturday evening
-            period = "Motzei Shabbos"
+                    relevant_times["Sunset"] = erev_shabbos_sunset.strftime("%-I:%M %p")
+            else:
+                # Add sunset time (formatted as 7:51 not 07:51)
+                if sunset:
+                    relevant_times["Sunset"] = sunset.strftime("%-I:%M %p")
+    elif today.weekday() == 5 and sunset and now >= sunset:
+        # Saturday evening - check if before or after Havdalah
+        havdalah_time = sunset + timedelta(minutes=73)  # Havdalah is sunset + 73 minutes
+        if now < havdalah_time:
+            # Between sunset and Havdalah - show Shabbos Evening times
+            period = "Shabbos Evening"
+            maariv_time = sunset + timedelta(minutes=59)  # Maariv is sunset + 59 minutes
+            shabbos_evening_sunset = sunset - timedelta(minutes=1)  # Sunset is sunset - 1 minute
             relevant_times = {
-                "Havdalah": tzeit72min,  # Show as Havdalah instead of Tzeis
-                "Latest Maleve Malka": time_objects.get('chatzotNight')  # Chatzos Night renamed
+                "Sunset": shabbos_evening_sunset,
+                "Maariv": maariv_time,
+                "Havdalah": havdalah_time
             }
         else:
-            period = "Evening"
+            # After Havdalah - show Motzei Shabbos times
+            period = "Motzei Shabbos"
             relevant_times = {
-                "Tzeis (72 min)": tzeit72min,
-                "Chatzos Night": time_objects.get('chatzotNight')
+                "Havdalah": havdalah_time,
+                "Latest Maleve Malka": time_objects.get('chatzotNight')
             }
+    elif now >= sunset or (chatzot_night and now < chatzot_night):
+        # After sunset or before midnight - show Evening times
+        period = "Evening"
+        relevant_times = {
+            "Tzeis (72 min)": tzeit72min,
+            "Chatzos Night": time_objects.get('chatzotNight')
+        }
     else:
         # Fallback - show Shacharis times
         period = "Morning"

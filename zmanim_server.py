@@ -8,6 +8,7 @@ from flask import Flask, jsonify, render_template, request, abort
 from datetime import datetime, date, time, timedelta
 import json
 import os
+import re
 import pytz
 import requests
 
@@ -16,6 +17,7 @@ app = Flask(__name__)
 # Load zmanim data
 ZMANIM_FILE = '/var/lib/homebridge/zmanim-js/hebcal_zmanim.json'
 PARASHA_FILE = '/var/lib/homebridge/zmanim-js/parasha.json'
+PARASHA_MAP_FILE = os.path.join(os.path.dirname(__file__), 'ParashaMap_extracted.m')
 
 # Hebcal API configuration
 HEBCAL_API_BASE = 'https://www.hebcal.com/hebcal'
@@ -23,6 +25,45 @@ HEBCAL_LEYNING_API = 'https://www.hebcal.com/leyning'
 HEBCAL_ZIP = '53216'
 
 # API key authentication removed - endpoints are now public
+
+_PARASHA_MAP_CACHE = None
+
+def load_parasha_map():
+    """Load Hebcal->preferred parasha name mappings from ParashaMap_extracted.m"""
+    global _PARASHA_MAP_CACHE
+    if _PARASHA_MAP_CACHE is not None:
+        return _PARASHA_MAP_CACHE
+
+    mapping = {}
+    pattern = re.compile(r'^\{"([^"]+)",\s*"([^"]+)"\},?$')
+
+    try:
+        with open(PARASHA_MAP_FILE, 'r', encoding='utf-8-sig') as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                match = pattern.match(line)
+                if not match:
+                    continue
+
+                hebcal_name = match.group(1).strip()
+                preferred_name = match.group(2).strip()
+                mapping[hebcal_name] = preferred_name
+    except FileNotFoundError:
+        print(f"Warning: {PARASHA_MAP_FILE} not found. Using Hebcal names as-is.")
+
+    _PARASHA_MAP_CACHE = mapping
+    return _PARASHA_MAP_CACHE
+
+def normalize_parasha_name(parasha_name):
+    """Rename a Hebcal parasha name using ParashaMap_extracted.m"""
+    if not parasha_name:
+        return parasha_name
+
+    mapping = load_parasha_map()
+    cleaned = parasha_name.strip()
+    ascii_apostrophe = cleaned.replace('’', "'").replace('‘', "'")
+
+    return mapping.get(cleaned) or mapping.get(ascii_apostrophe) or cleaned
 
 def load_zmanim_data():
     """Load zmanim data from JSON file"""
@@ -91,6 +132,8 @@ def fetch_weekly_parasha():
         
         if not parasha_name:
             parasha_name = 'Unknown'
+        else:
+            parasha_name = normalize_parasha_name(parasha_name)
         
         # Save to file
         parasha_data = {
@@ -534,4 +577,4 @@ def update_parasha():
 if __name__ == '__main__':
     print("Starting Zmanim Tracker Server...")
     print("API available at: https://abie.live/zmanim/api/zmanim")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=False)

@@ -62,8 +62,19 @@ def normalize_parasha_name(parasha_name):
     mapping = load_parasha_map()
     cleaned = parasha_name.strip()
     ascii_apostrophe = cleaned.replace('’', "'").replace('‘', "'")
+    exact_match = mapping.get(cleaned) or mapping.get(ascii_apostrophe)
+    if exact_match:
+        return exact_match
 
-    return mapping.get(cleaned) or mapping.get(ascii_apostrophe) or cleaned
+    normalized = ascii_apostrophe
+
+    # Fall back to phrase-level replacements so holiday/parasha combinations
+    # like "Pesach Shabbat Chol ha-Moed" still honor the preferred spellings.
+    for source, target in sorted(mapping.items(), key=lambda item: len(item[0]), reverse=True):
+        if source in normalized:
+            normalized = normalized.replace(source, target)
+
+    return normalized
 
 def load_zmanim_data():
     """Load zmanim data from JSON file"""

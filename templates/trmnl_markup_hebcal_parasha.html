@@ -7,8 +7,21 @@
     style="width: 100%; height: 100%; max-height: 240px; padding: 16px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
     {% if parasha %}
         {% assign parasha_clean = parasha | remove: "Parshas " | remove: "Parashat " %}
+        {% assign parasha_length = parasha_clean | size %}
+        {% assign parasha_font_size = "52px" %}
+        {% assign parasha_line_height = "1.05" %}
+        {% assign parasha_margin = "0 0 8px 0" %}
+        {% if parasha_length > 24 %}
+            {% assign parasha_font_size = "34px" %}
+            {% assign parasha_line_height = "1.0" %}
+        {% elsif parasha_length > 18 %}
+            {% assign parasha_font_size = "40px" %}
+            {% assign parasha_line_height = "1.0" %}
+        {% elsif parasha_length > 12 %}
+            {% assign parasha_font_size = "46px" %}
+        {% endif %}
         <div style="text-align: center;">
-            <p style="font-size: 52px; font-weight: bold; margin: 0 0 8px 0; color: black;">
+            <p style="font-size: {{ parasha_font_size }}; font-weight: bold; line-height: {{ parasha_line_height }}; margin: {{ parasha_margin }}; color: black; max-width: 100%; word-break: break-word;">
                 {{ parasha_clean }}
             </p>
             <p style="font-size: 24px; margin: 0; color: black;">Parasha</p>

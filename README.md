@@ -26,11 +26,21 @@ A TRMNL device display for Jewish halachic times (Zmanim) that dynamically shows
    /var/lib/homebridge/zmanim-js/hebcal_zmanim.json
    ```
 
+3. Make sure the separate generator service is running and enabled at boot:
+   ```bash
+   sudo systemctl enable --now zmanim.service
+   ```
+
 ## Usage
 
 Start the server:
 ```bash
 python3 zmanim_server.py
+```
+
+If you are using the systemd-managed generator, check it with:
+```bash
+sudo systemctl status zmanim.service
 ```
 
 The server will run on port 5001 and provide:

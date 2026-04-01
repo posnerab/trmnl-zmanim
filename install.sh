@@ -26,11 +26,11 @@ fi
 
 # API key setup removed - endpoints are now public
 
-# Install systemd service
-echo "Installing systemd service..."
-sudo cp zmanim-tracker.service /etc/systemd/system/
+# Ensure the existing zmanim generator service is enabled
+echo "Enabling zmanim.service..."
 sudo systemctl daemon-reload
-sudo systemctl enable zmanim-tracker.service
+sudo systemctl enable zmanim.service
+sudo systemctl start zmanim.service
 
 # Set up nginx configuration
 echo "Setting up nginx configuration..."
@@ -62,10 +62,10 @@ echo ""
 echo "Installation complete!"
 echo ""
 echo "Next steps:"
-echo "1. Start the service: sudo systemctl start zmanim-tracker"
+echo "1. Start the service: sudo systemctl start zmanim"
 echo "2. Reload nginx: sudo systemctl reload nginx"
-echo "3. Check service status: sudo systemctl status zmanim-tracker"
-echo "4. View logs: sudo journalctl -u zmanim-tracker -f"
+echo "3. Check service status: sudo systemctl status zmanim"
+echo "4. View logs: sudo journalctl -u zmanim -f"
 echo ""
 echo "The server will be available at:"
 echo "- Web: http://abie.live/zmanim/"
